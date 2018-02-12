@@ -344,7 +344,6 @@ class MockModule(object):
         self.DOMAIN = domain
         self.DEPENDENCIES = dependencies or []
         self.REQUIREMENTS = requirements or []
-        self._setup = setup
 
         if config_schema is not None:
             self.CONFIG_SCHEMA = config_schema
@@ -352,8 +351,14 @@ class MockModule(object):
         if platform_schema is not None:
             self.PLATFORM_SCHEMA = platform_schema
 
+        if setup is not None:
+            self.setup = setup
+
         if async_setup is not None:
             self.async_setup = async_setup
+
+        if not setup and not async_setup:
+            self.async_setup = mock_coro_func(True)
 
     def setup(self, hass, config):
         """Set up the component.
@@ -374,21 +379,18 @@ class MockPlatform(object):
                  platform_schema=None, async_setup_platform=None):
         """Initialize the platform."""
         self.DEPENDENCIES = dependencies or []
-        if setup_platform is not None:
-            self.setup_platform = setup_platform
 
         if platform_schema is not None:
             self.PLATFORM_SCHEMA = platform_schema
 
-        self._async_setup_platform = async_setup_platform
+        if setup_platform is not None:
+            self.setup_platform = setup_platform
 
-    @asyncio.coroutine
-    def async_setup_platform(self, hass, config, async_add_devices,
-                             discovery_info=None):
-        """Set up the platform."""
-        if self._async_setup_platform is not None:
-            yield from self._async_setup_platform(
-                hass, config, async_add_devices, discovery_info)
+        if async_setup_platform is not None:
+            self.async_setup_platform = async_setup_platform
+
+        if not setup_platform and not async_setup_platform:
+            self.async_setup_platform = mock_coro_func()
 
 
 class MockToggleDevice(entity.ToggleEntity):
