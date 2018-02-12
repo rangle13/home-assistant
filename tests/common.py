@@ -374,18 +374,21 @@ class MockPlatform(object):
                  platform_schema=None, async_setup_platform=None):
         """Initialize the platform."""
         self.DEPENDENCIES = dependencies or []
-        self._setup_platform = setup_platform
+        if setup_platform is not None:
+            self.setup_platform = setup_platform
 
         if platform_schema is not None:
             self.PLATFORM_SCHEMA = platform_schema
 
-        if async_setup_platform is not None:
-            self.async_setup_platform = async_setup_platform
+        self._async_setup_platform = async_setup_platform
 
-    def setup_platform(self, hass, config, add_devices, discovery_info=None):
+    @asyncio.coroutine
+    def async_setup_platform(self, hass, config, async_add_devices,
+                             discovery_info=None):
         """Set up the platform."""
-        if self._setup_platform is not None:
-            self._setup_platform(hass, config, add_devices, discovery_info)
+        if self._async_setup_platform is not None:
+            yield from self._async_setup_platform(
+                hass, config, async_add_devices, discovery_info)
 
 
 class MockToggleDevice(entity.ToggleEntity):
